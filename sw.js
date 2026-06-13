@@ -1,6 +1,7 @@
 // sw.js — Notify Test service worker
 const CACHE = 'notify-test-v1';
-const ASSETS = ['/', '/index.html'];
+const ASSETS = ['/notify-test/', '/notify-test/index.html'];
+
 
 self.addEventListener('install', e => {
   e.waitUntil(
