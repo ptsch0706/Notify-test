@@ -2,7 +2,7 @@
   "name": "Notify Test",
   "short_name": "Notify Test",
   "description": "PWA notification sandbox",
-  "start_url": "/notify-test/",
+  "start_url": "/Notify-test/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
