@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notify Test</title>
+  <meta name="description" content="PWA notification test" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Notify Test" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --border:    #334155;
+      --cyan:      #06b6d4;
+      --cyan-dim:  #0891b2;
+      --green:     #4ade80;
+      --yellow:    #fbbf24;
+      --red:       #f87171;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --radius:    14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 40px;
+      gap: 28px;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    .bell {
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    h1 span {
+      color: var(--cyan);
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* Status card */
+    .card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .status-row .label {
+      color: var(--muted);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      letter-spacing: 0.02em;
+    }
+
+    .badge.ok      { background: #14532d; color: var(--green); }
+    .badge.warn    { background: #451a03; color: var(--yellow); }
+    .badge.bad     { background: #450a0a; color: var(--red); }
+    .badge.unknown { background: var(--border); color: var(--muted); }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: -0.01em;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--cyan);
+      color: #0f172a;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--cyan-dim); }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+
+    /* Log */
+    .log {
+      width: 100%;
+      max-width: 400px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      min-height: 120px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-empty {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin: auto;
+      text-align: center;
+    }
+
+    .log-entry {
+      font-size: 0.8rem;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .log-entry .time {
+      color: var(--muted);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-entry .msg { color: var(--text); }
+    .log-entry.ok  .msg { color: var(--green); }
+    .log-entry.warn .msg { color: var(--yellow); }
+    .log-entry.err .msg { color: var(--red); }
+
+    /* iOS install hint */
+    .hint {
+      width: 100%;
+      max-width: 400px;
+      background: #1c1a05;
+      border: 1px solid #78350f;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      font-size: 0.8rem;
+      color: var(--yellow);
+      line-height: 1.5;
+      display: none;
+    }
+    .hint.visible { display: block; }
+    .hint strong { display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <span class="bell">🔔</span>
+    <h1>Notify <span>Test</span></h1>
+    <p class="subtitle">PWA push notification sandbox</p>
+  </header>
+
+  <!-- Status card -->
+  <div class="card">
+    <div class="card-title">Environment</div>
+
+    <div class="status-row">
+      <span class="label">Notifications API</span>
+      <span class="badge unknown" id="s-api">checking…</span>
+    </div>
+    <hr />
+    <div class="status-row">
+      <span class="label">Service Worker</span>
+      <span class="badge unknown" id="s-sw">checking…</span>
+    </div>
+    <hr />
+    <div class="status-row">
+      <span class="label">Permission</span>
+      <span class="badge unknown" id="s-perm">checking…</span>
+    </div>
+    <hr />
+    <div class="status-row">
+      <span class="label">Installed (Home Screen)</span>
+      <span class="badge unknown" id="s-install">checking…</span>
+    </div>
+  </div>
+
+  <!-- iOS install hint -->
+  <div class="hint" id="ios-hint">
+    <strong>⚠️ Add to Home Screen first</strong>
+    On iOS, notifications only work when the app is installed. Tap the Share button in Safari, then "Add to Home Screen," then reopen from there.
+  </div>
+
+  <!-- Actions -->
+  <button class="btn btn-primary" id="btn-request" disabled>Request Permission</button>
+  <button class="btn btn-secondary" id="btn-test" disabled>Send Test Notification</button>
+
+  <!-- Log -->
+  <div class="log" id="log">
+    <span class="log-empty" id="log-empty">Activity will appear here</span>
+  </div>
+
+  <script>
+    // ── Logging ──────────────────────────────────────────────────────────────
+    const logEl = document.getElementById('log');
+    const logEmpty = document.getElementById('log-empty');
+
+    function addLog(msg, type = '') {
+      logEmpty.style.display = 'none';
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      entry.innerHTML = `<span class="time">${time}</span><span class="msg">${msg}</span>`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ── Badge helpers ─────────────────────────────────────────────────────────
+    function setBadge(id, text, state) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = `badge ${state}`;
+    }
+
+    // ── Environment checks ────────────────────────────────────────────────────
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                      || window.navigator.standalone === true;
+    const hasNotifAPI = 'Notification' in window;
+    const hasSW = 'serviceWorker' in navigator;
+
+    // Notifications API
+    if (hasNotifAPI) {
+      setBadge('s-api', 'supported', 'ok');
+    } else {
+      setBadge('s-api', 'not supported', 'bad');
+      addLog('Notifications API not available in this browser.', 'err');
+    }
+
+    // Service Worker
+    if (hasSW) {
+      setBadge('s-sw', 'supported', 'ok');
+    } else {
+      setBadge('s-sw', 'not supported', 'bad');
+    }
+
+    // Installed
+    if (isStandalone) {
+      setBadge('s-install', 'yes', 'ok');
+    } else {
+      setBadge('s-install', 'no', isIOS ? 'bad' : 'warn');
+      if (isIOS) {
+        document.getElementById('ios-hint').classList.add('visible');
+      }
+    }
+
+    // Permission
+    function refreshPermission() {
+      if (!hasNotifAPI) { setBadge('s-perm', 'n/a', 'bad'); return; }
+      const p = Notification.permission;
+      if (p === 'granted')  { setBadge('s-perm', 'granted', 'ok'); }
+      if (p === 'denied')   { setBadge('s-perm', 'denied', 'bad'); }
+      if (p === 'default')  { setBadge('s-perm', 'not asked', 'warn'); }
+      updateButtons();
+    }
+
+    // ── Button state ──────────────────────────────────────────────────────────
+    const btnRequest = document.getElementById('btn-request');
+    const btnTest    = document.getElementById('btn-test');
+
+    function updateButtons() {
+      if (!hasNotifAPI) return;
+      const p = Notification.permission;
+      btnRequest.disabled = (p !== 'default');
+      btnTest.disabled    = (p !== 'granted');
+    }
+
+    // ── Service Worker registration ───────────────────────────────────────────
+    async function registerSW() {
+      if (!hasSW) return;
+      try {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        addLog('Service worker registered.', 'ok');
+        return reg;
+      } catch (e) {
+        addLog(`Service worker error: ${e.message}`, 'err');
+      }
+    }
+
+    // ── Request permission ────────────────────────────────────────────────────
+    btnRequest.addEventListener('click', async () => {
+      if (!hasNotifAPI) return;
+      addLog('Requesting notification permission…');
+      try {
+        const result = await Notification.requestPermission();
+        if (result === 'granted') {
+          addLog('Permission granted! ✓', 'ok');
+        } else if (result === 'denied') {
+          addLog('Permission denied. You may need to reset this in Settings.', 'err');
+        } else {
+          addLog('Permission dismissed.', 'warn');
+        }
+        refreshPermission();
+      } catch (e) {
+        addLog(`Error: ${e.message}`, 'err');
+      }
+    });
+
+    // ── Send test notification ────────────────────────────────────────────────
+    btnTest.addEventListener('click', async () => {
+      if (Notification.permission !== 'granted') return;
+
+      // Prefer service worker notification (works when app is backgrounded)
+      if (hasSW && navigator.serviceWorker.controller) {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification('Notify Test', {
+            body: 'It works! This is a PWA notification.',
+            icon: 'icon.png',
+            badge: 'icon.png',
+            tag: 'test-notif',
+          });
+          addLog('Notification sent via service worker.', 'ok');
+          return;
+        } catch (e) {
+          addLog(`SW notification failed, falling back: ${e.message}`, 'warn');
+        }
+      }
+
+      // Fallback: foreground notification (only works while app is open)
+      try {
+        new Notification('Notify Test', {
+          body: 'It works! This is a foreground notification.',
+          icon: 'icon.png',
+        });
+        addLog('Foreground notification sent.', 'ok');
+      } catch (e) {
+        addLog(`Notification error: ${e.message}`, 'err');
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    (async () => {
+      refreshPermission();
+      await registerSW();
+      addLog('Environment check complete.');
+
+      if (isIOS && !isStandalone) {
+        addLog('On iOS but not installed — notifications will not work.', 'warn');
+      }
+    })();
+  </script>
+</body>
+</html>
